@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/hex-generator/static/css/main.bc6f9e84.css",
+    "main.js": "/hex-generator/static/js/main.6a206840.js",
+    "static/js/453.a91e0483.chunk.js": "/hex-generator/static/js/453.a91e0483.chunk.js",
+    "index.html": "/hex-generator/index.html",
+    "main.bc6f9e84.css.map": "/hex-generator/static/css/main.bc6f9e84.css.map",
+    "main.6a206840.js.map": "/hex-generator/static/js/main.6a206840.js.map",
+    "453.a91e0483.chunk.js.map": "/hex-generator/static/js/453.a91e0483.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.bc6f9e84.css",
+    "static/js/main.6a206840.js"
+  ]
+}
