@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import './App.css';
 
 const BASE = {
-  FOREST: 60,
+  FOREST: 50,
   HILL: 10,
   RIVER: 10,
-  SWAMP: 8,
-  FLOWER: 6,
-  WOOD: 4,
-  ESSENCE: 2
+  SWAMP: 10,
+  FLOWER: 8,
+  WOOD: 6,
+  ESSENCE: 6
 };
 
 const COLORS = {
@@ -38,7 +38,7 @@ function App() {
   const handleGenerate = () => {
     const selected = randomWeighted(BASE);
     setHexType(selected);
-    setHistory(prev => [selected, ...prev.slice(0, 9)]); // Keep last 10
+    setHistory(prev => [selected, ...prev.slice(0, 4)]); // Keep last 5
   };
 
   const backgroundColor = hexType ? COLORS[hexType] : '#222';
@@ -59,6 +59,7 @@ function App() {
         boxSizing: 'border-box'
       }}
     >
+      <h1 className="outlined-text">Hexpedition Playtest</h1>
       <button
         onClick={handleGenerate}
         style={{
