@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
+import Gameboard from './Gameboard';
 
 const BASE = {
   FOREST: 60,
@@ -35,7 +36,7 @@ function App() {
   const [hexType, setHexType] = useState(null);
   const [history, setHistory] = useState([]);
   const [encounterResult, setEncounterResult] = useState(null);
-  // removed shared isPressed state in favor of a small reusable PressableButton component
+  const [view, setView] = useState('main'); // 'main' or 'board'
 
   // Pressable button component gives the same press animation/feedback to any button.
   function PressableButton({ children, onClick, style = {}, ...props }) {
@@ -129,84 +130,92 @@ function App() {
       }}
     >
       <h1 className="outlined-text">Hexpedition Playtest</h1>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: '2em',
-          justifyContent: 'center',
-          width: '100%',
-          maxWidth: '800px',
-        }}
-      >
-        {/* Generator Column */}
-        <div style={{ 
-          flex: '1 1 300px', 
-          minWidth: '280px',
-          backgroundColor: 'rgba(255,255,255,0.1)',
-          borderRadius: '10px',
-          padding: '1em',
-          color: 'white',
-          boxShadow: '0 0 10px rgba(0,0,0,0.3)'
-          }}>
-          <PressableButton
-            onClick={handleGenerate}
-            style={{
-              padding: '1em 2em',
-              fontSize: '1.5em',
-              marginBottom: '1em',
-              width: '100%',
-            }}
-          >
-            Hex Generator
-          </PressableButton>
+      <div style={{ width: '100%', maxWidth: 800, display: 'flex', justifyContent: 'flex-end', marginBottom: '0.6em' }}>
+        <PressableButton onClick={() => setView('board')}>Open Gameboard</PressableButton>
+      </div>
 
-          <div
-            style={{
-              fontSize: '2.5em',
-              color: 'white',
-              textShadow: '1px 1px 4px black',
-              opacity: hexType ? 1 : 0,
-              transform: hexType ? 'scale(1)' : 'scale(0.95)',
-              transition: 'all 0.4s ease',
-              textAlign: 'center'
-            }}
-          >
-            {hexType ? hexType : 'Click to generate a hex'}
-          </div>
-        </div>
-
-        {/* Hex Movement Panel */}
+      {view === 'board' ? (
+        <Gameboard onBack={() => setView('main')} />
+      ) : (
         <div
           style={{
-            flex: '1 1 300px',
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: '2em',
+            justifyContent: 'center',
+            width: '100%',
+            maxWidth: '800px',
+          }}
+        >
+          {/* Generator Column */}
+          <div style={{ 
+            flex: '1 1 300px', 
             minWidth: '280px',
             backgroundColor: 'rgba(255,255,255,0.1)',
             borderRadius: '10px',
             padding: '1em',
             color: 'white',
             boxShadow: '0 0 10px rgba(0,0,0,0.3)'
-          }}
-        >
-          <h2 style={{ textAlign: 'center' }}>Hex Movement</h2>
-          <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '1em' }}>
-            <PressableButton onClick={() => encounterType('1-2')}>1-2</PressableButton>
-            <PressableButton onClick={() => encounterType('3-4')}>3-4</PressableButton>
-            <PressableButton onClick={() => encounterType('5+')}>5+</PressableButton>
+            }}>
+            <PressableButton
+              onClick={handleGenerate}
+              style={{
+                padding: '1em 2em',
+                fontSize: '1.5em',
+                marginBottom: '1em',
+                width: '100%',
+              }}
+            >
+              Hex Generator
+            </PressableButton>
+
+            <div
+              style={{
+                fontSize: '2.5em',
+                color: 'white',
+                textShadow: '1px 1px 4px black',
+                opacity: hexType ? 1 : 0,
+                transform: hexType ? 'scale(1)' : 'scale(0.95)',
+                transition: 'all 0.4s ease',
+                textAlign: 'center'
+              }}
+            >
+              {hexType ? hexType : 'Click to generate a hex'}
+            </div>
           </div>
-          <div style={{
-            textAlign: 'center',
-            fontSize: '2em',
-            fontWeight: 'bold',
-            marginTop: '1em',
-            color: encounterResult === 'Rare' ? '#ffcc00' : '#ffffff',
-            transition: 'all 0.3s ease'
-          }}>
-            {encounterResult ? encounterResult : '—'}
+
+          {/* Hex Movement Panel */}
+          <div
+            style={{
+              flex: '1 1 300px',
+              minWidth: '280px',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              borderRadius: '10px',
+              padding: '1em',
+              color: 'white',
+              boxShadow: '0 0 10px rgba(0,0,0,0.3)'
+            }}
+          >
+            <h2 style={{ textAlign: 'center' }}>Hex Movement</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '1em' }}>
+              <PressableButton onClick={() => encounterType('1-2')}>1-2</PressableButton>
+              <PressableButton onClick={() => encounterType('3-4')}>3-4</PressableButton>
+              <PressableButton onClick={() => encounterType('5+')}>5+</PressableButton>
+            </div>
+            <div style={{
+              textAlign: 'center',
+              fontSize: '2em',
+              fontWeight: 'bold',
+              marginTop: '1em',
+              color: encounterResult === 'Rare' ? '#ffcc00' : '#ffffff',
+              transition: 'all 0.3s ease'
+            }}>
+              {encounterResult ? encounterResult : '—'}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Previous Rolls */}
       <div
