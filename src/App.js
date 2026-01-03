@@ -89,6 +89,8 @@ function App() {
      const selected = randomWeighted(BASE);
      setHexType(selected);
      setHistory(prev => [selected, ...prev.slice(0, 4)]);
+     // return the selected type so callers (e.g. Gameboard) can persist it immediately
+     return selected;
    };
 
   const backgroundColor = hexType ? COLORS[hexType] : '#222';
@@ -135,7 +137,12 @@ function App() {
       </div>
 
       {view === 'board' ? (
-        <Gameboard onBack={() => setView('main')} />
+        <Gameboard
+          onBack={() => setView('main')}
+          onGenerate={handleGenerate}
+          hexType={hexType}
+          colors={COLORS}
+        />
       ) : (
         <div
           style={{

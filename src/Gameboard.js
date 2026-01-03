@@ -77,7 +77,8 @@ function polygonPoints(cx, cy, size) {
   return pts.join(' ');
 }
 
-export default function Gameboard({ onBack, radius = 12, hexSize = 18 }) {
+// Accept props from App: onBack, onGenerate, hexType, colors
+export default function Gameboard({ onBack, onGenerate, hexType, colors, radius = 12, hexSize = 18 }) {
   const coords = generateHexCoords(radius);
   // compute bounds
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -95,6 +96,8 @@ export default function Gameboard({ onBack, radius = 12, hexSize = 18 }) {
   const height = Math.ceil(maxY - minY + pad * 2);
 
   const [selected, setSelected] = useState(null);
+  // map of "q,r" -> assigned hex type (persists color)
+  const [assigned, setAssigned] = useState({});
 
   return (
     <div style={{
@@ -124,15 +127,35 @@ export default function Gameboard({ onBack, radius = 12, hexSize = 18 }) {
             const cy = y;
             const key = `${q},${r}`;
             const isSelected = selected === key;
+            // if a hex has been assigned previously, use that color (persistent)
+            const assignedType = assigned[key];
+            const fill = assignedType && colors
+              ? (colors[assignedType] || '#ffcc66')
+              : (isSelected && hexType && colors ? (colors[hexType] || '#ffcc66') : '#333');
+            const stroke = assignedType ? '#ffaa00' : (isSelected ? '#ffaa00' : '#222');
+            const strokeWidth = assignedType ? 2.5 : (isSelected ? 2.5 : 1);
+
             return (
               <g key={key} transform={`translate(0,0)`}>
                 <polygon
                   points={polygonPoints(cx, cy, hexSize)}
-                  fill={isSelected ? '#ffcc66' : '#333'}
-                  stroke={isSelected ? '#ffaa00' : '#222'}
-                  strokeWidth={isSelected ? 2.5 : 1}
+                  fill={fill}
+                  stroke={stroke}
+                  strokeWidth={strokeWidth}
                   style={{ cursor: 'pointer' }}
-                  onClick={() => setSelected(key)}
+                  onClick={() => {
+                    // call App's handleGenerate to get a generated hex type,
+                    // persist that mapping locally so the color remains on this tile
+                    let generatedType = null;
+                    if (onGenerate) {
+                      // handleGenerate now returns the selected type
+                      generatedType = onGenerate();
+                    }
+                    if (generatedType) {
+                      setAssigned(prev => ({ ...prev, [key]: generatedType }));
+                    }
+                    setSelected(key);
+                  }}
                 />
                 {/* small coord label */}
                 <text x={cx} y={cy + 4} fontSize={8} fill="#eee" textAnchor="middle" pointerEvents="none">
