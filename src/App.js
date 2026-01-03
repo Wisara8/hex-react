@@ -35,12 +35,60 @@ function App() {
   const [hexType, setHexType] = useState(null);
   const [history, setHistory] = useState([]);
   const [encounterResult, setEncounterResult] = useState(null);
+  // removed shared isPressed state in favor of a small reusable PressableButton component
+
+  // Pressable button component gives the same press animation/feedback to any button.
+  function PressableButton({ children, onClick, style = {}, ...props }) {
+    const [pressed, setPressed] = useState(false);
+
+    const handleMouseDown = () => setPressed(true);
+    const handleMouseUp = () => setPressed(false);
+    const handleMouseLeave = () => setPressed(false);
+    const handleClick = (e) => {
+      // brief visual feedback on click
+      setPressed(true);
+      setTimeout(() => setPressed(false), 180);
+      if (onClick) onClick(e);
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        setPressed(true);
+        setTimeout(() => setPressed(false), 180);
+      }
+    };
+
+    return (
+      <button
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        style={{
+          padding: '0.6em 1em',
+          fontSize: '1em',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          backgroundColor: pressed ? '#555' : '#444',
+          color: 'white',
+          transition: 'all 0.18s ease',
+          transform: pressed ? 'translateY(1px) scale(0.97)' : 'translateY(0) scale(1)',
+          boxShadow: pressed ? 'inset 0 0 8px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.2)',
+          ...style
+        }}
+        {...props}
+      >
+        {children}
+      </button>
+    );
+  }
 
   const handleGenerate = () => {
-    const selected = randomWeighted(BASE);
-    setHexType(selected);
-    setHistory(prev => [selected, ...prev.slice(0, 4)]);
-  };
+     const selected = randomWeighted(BASE);
+     setHexType(selected);
+     setHistory(prev => [selected, ...prev.slice(0, 4)]);
+   };
 
   const backgroundColor = hexType ? COLORS[hexType] : '#222';
 
@@ -102,23 +150,17 @@ function App() {
           color: 'white',
           boxShadow: '0 0 10px rgba(0,0,0,0.3)'
           }}>
-          <button
+          <PressableButton
             onClick={handleGenerate}
             style={{
               padding: '1em 2em',
               fontSize: '1.5em',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              backgroundColor: '#444',
-              color: 'white',
               marginBottom: '1em',
               width: '100%',
-              transition: 'background-color 0.3s'
             }}
           >
             Hex Generator
-          </button>
+          </PressableButton>
 
           <div
             style={{
@@ -149,9 +191,9 @@ function App() {
         >
           <h2 style={{ textAlign: 'center' }}>Hex Movement</h2>
           <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '1em' }}>
-            <button onClick={() => encounterType('1-2')}>1-2</button>
-            <button onClick={() => encounterType('3-4')}>3-4</button>
-            <button onClick={() => encounterType('5+')}>5+</button>
+            <PressableButton onClick={() => encounterType('1-2')}>1-2</PressableButton>
+            <PressableButton onClick={() => encounterType('3-4')}>3-4</PressableButton>
+            <PressableButton onClick={() => encounterType('5+')}>5+</PressableButton>
           </div>
           <div style={{
             textAlign: 'center',
