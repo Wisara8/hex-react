@@ -99,6 +99,29 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
   // map of "q,r" -> assigned hex type (persists color)
   const [assigned, setAssigned] = useState({});
 
+  // 2d12 roll state
+  const [die1, setDie1] = useState(null);
+  const [die2, setDie2] = useState(null);
+  const [sum, setSum] = useState(null);
+  const [ap, setAp] = useState(null); // action points
+
+  const rollD12 = () => Math.floor(Math.random() * 12) + 1;
+  const rollTwoD12 = () => {
+    const d1 = rollD12();
+    const d2 = rollD12();
+    const s = d1 + d2;
+    setDie1(d1);
+    setDie2(d2);
+    setSum(s);
+    // compute action points based on sum
+    let computed = null;
+    if (s >= 2 && s <= 6) computed = 4;
+    else if (s >= 7 && s <= 14) computed = 5;
+    else if (s >= 15 && s <= 19) computed = 6;
+    else if (s >= 20 && s <= 24) computed = 8;
+    setAp(computed);
+  };
+
   return (
     <div style={{
       padding: '1em',
@@ -109,10 +132,31 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
       flexDirection: 'column',
       alignItems: 'center'
     }}>
-      <div style={{ width: '100%', maxWidth: 1000, display: 'flex', justifyContent: 'space-between', marginBottom: '0.6em' }}>
-        <PressableButton onClick={onBack}>Back</PressableButton>
+      <div style={{ width: '100%', maxWidth: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6em' }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <PressableButton onClick={onBack}>Back</PressableButton>
+        </div>
+
         <div style={{ alignSelf: 'center', fontWeight: '600' }}>Hex Crawl — radius {radius}</div>
-        <div />{/* spacer */}
+
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <PressableButton onClick={rollTwoD12}>Roll 2d12</PressableButton>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
+            <div style={{ minWidth: 42, padding: '6px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.06)', textAlign: 'center' }}>
+              D1: {die1 ?? '—'}
+            </div>
+            <div style={{ minWidth: 42, padding: '6px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.06)', textAlign: 'center' }}>
+              D2: {die2 ?? '—'}
+            </div>
+            <div style={{ minWidth: 48, padding: '6px 8px', borderRadius: 6, background: '#222', color: '#ffdd57', textAlign: 'center', fontWeight: 600 }}>
+              Sum: {sum ?? '—'}
+            </div>
+            {/* AP (action points) — more prominent */}
+            <div style={{ minWidth: 72, padding: '8px 12px', borderRadius: 8, background: '#ffdd57', color: '#222', textAlign: 'center', fontWeight: 800, fontSize: 16 }}>
+              AP: {ap ?? '—'}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: 10 }}>
