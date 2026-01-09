@@ -194,15 +194,19 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
                     // block clicks when no action points
                     if ((ap ?? 0) <= 0) return;
 
-                    // consume 1 action point (min 0)
-                    setAp(prev => Math.max(0, (prev ?? 0) - 1));
-
-                    // call App's handleGenerate to get a generated hex type,
-                    // persist that mapping locally so the color remains on this tile
+                    // call App's handleGenerate to get a generated hex type
                     let generatedType = null;
                     if (onGenerate) {
                       generatedType = onGenerate();
                     }
+
+                    // cost: HILL, RIVER, SWAMP cost 2 AP, others cost 1 AP
+                    const cost = (generatedType === 'HILL' || generatedType === 'RIVER' || generatedType === 'SWAMP') ? 2 : 1;
+
+                    // consume AP (min 0)
+                    setAp(prev => Math.max(0, (prev ?? 0) - cost));
+
+                    // persist assigned type/color
                     if (generatedType) {
                       setAssigned(prev => ({ ...prev, [key]: generatedType }));
                     }
