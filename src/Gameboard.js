@@ -186,13 +186,21 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
                   fill={fill}
                   stroke={stroke}
                   strokeWidth={strokeWidth}
-                  style={{ cursor: 'pointer' }}
+                  style={{
+                    cursor: (ap ?? 0) > 0 ? 'pointer' : 'not-allowed',
+                    opacity: (ap ?? 0) > 0 ? 1 : 0.6
+                  }}
                   onClick={() => {
+                    // block clicks when no action points
+                    if ((ap ?? 0) <= 0) return;
+
+                    // consume 1 action point (min 0)
+                    setAp(prev => Math.max(0, (prev ?? 0) - 1));
+
                     // call App's handleGenerate to get a generated hex type,
                     // persist that mapping locally so the color remains on this tile
                     let generatedType = null;
                     if (onGenerate) {
-                      // handleGenerate now returns the selected type
                       generatedType = onGenerate();
                     }
                     if (generatedType) {
