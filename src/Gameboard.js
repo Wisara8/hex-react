@@ -287,7 +287,7 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
           </div>
 
           {/* Player states display */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.8em', fontSize: '0.9em' }}>
+          <div style={{ display: 'grid', gridTemplateRows: 'repeat(4, 1fr)', gap: '0.8em', fontSize: '0.9em' }}>
             {players.map((player, index) => (
               <div key={index} style={{
                 padding: '0.8em',
