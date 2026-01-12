@@ -79,7 +79,7 @@ function polygonPoints(cx, cy, size) {
 
 // gamepiece definitions (refactor shapes into gamepieces)
 const GAMEPIECES = ['SQUARE', 'CIRCLE', 'TRIANGLE', 'SLASH'];
-const GAMEPIECE_COLORS = ['#ff5f57', '#2ecc71', '#3498db', '#f1c40f'];
+const GAMEPIECE_COLORS = ['#ff5f57', '#ffffffff', '#000000ff', '#f0f342ff'];
 
 /**
  * Render a gamepiece shape positioned at cx,cy inside the board SVG
@@ -234,7 +234,8 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
       else if (s >= 7 && s <= 14) computed = 5;
       else if (s >= 15 && s <= 19) computed = 6;
       else if (s >= 20 && s <= 24) computed = 8;
-      next[currentPlayer] = { die1: d1, die2: d2, sum: s, ap: computed };
+      // preserve existing player fields (including gamepiece, lastPos, etc.)
+      next[currentPlayer] = { ...next[currentPlayer], die1: d1, die2: d2, sum: s, ap: computed };
       return next;
     });
   };
