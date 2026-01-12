@@ -77,6 +77,104 @@ function polygonPoints(cx, cy, size) {
   return pts.join(' ');
 }
 
+// gamepiece definitions (refactor shapes into gamepieces)
+const GAMEPIECES = ['SQUARE', 'CIRCLE', 'TRIANGLE', 'SLASH'];
+const GAMEPIECE_COLORS = ['#ff5f57', '#2ecc71', '#3498db', '#f1c40f'];
+
+/**
+ * Render a gamepiece shape positioned at cx,cy inside the board SVG
+ */
+function renderGamepieceAt(type, idx, cx, cy, size) {
+  const symbolSize = Math.max(8, size * 0.6);
+  const half = symbolSize / 2;
+  const color = GAMEPIECE_COLORS[idx % GAMEPIECE_COLORS.length];
+  const key = `gp-${idx}`;
+
+  if (type === 'SQUARE') {
+    return (
+      <rect
+        key={key}
+        x={cx - half}
+        y={cy - half}
+        width={symbolSize}
+        height={symbolSize}
+        rx={2}
+        fill={color}
+        stroke="#222"
+        strokeWidth={1}
+      />
+    );
+  } else if (type === 'CIRCLE') {
+    return (
+      <circle
+        key={key}
+        cx={cx}
+        cy={cy}
+        r={half}
+        fill={color}
+        stroke="#222"
+        strokeWidth={1}
+      />
+    );
+  } else if (type === 'TRIANGLE') {
+    const tPts = [
+      `${cx},${cy - half}`,
+      `${cx - half},${cy + half * 0.7}`,
+      `${cx + half},${cy + half * 0.7}`
+    ].join(' ');
+    return (
+      <polygon
+        key={key}
+        points={tPts}
+        fill={color}
+        stroke="#222"
+        strokeWidth={1}
+      />
+    );
+  } else { // SLASH
+    return (
+      <g key={key} stroke={color} strokeWidth={Math.max(2, symbolSize * 0.18)} strokeLinecap="round">
+        <line x1={cx - half} y1={cy - half} x2={cx + half} y2={cy + half} />
+      </g>
+    );
+  }
+}
+
+/**
+ * small inline icon for player list (returns an <svg> element)
+ */
+function renderGamepieceIcon(type, idx, size = 14) {
+  const color = GAMEPIECE_COLORS[idx % GAMEPIECE_COLORS.length];
+  const half = size / 2;
+
+  if (type === 'SQUARE') {
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }}>
+        <rect x={1} y={1} width={size-2} height={size-2} rx={2} fill={color} stroke="#222" strokeWidth={1} />
+      </svg>
+    );
+  } else if (type === 'CIRCLE') {
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }}>
+        <circle cx={half} cy={half} r={half-1} fill={color} stroke="#222" strokeWidth={1} />
+      </svg>
+    );
+  } else if (type === 'TRIANGLE') {
+    const tPts = `${half},1 ${1},${size-1} ${size-1},${size-1}`;
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }}>
+        <polygon points={tPts} fill={color} stroke="#222" strokeWidth={1} />
+      </svg>
+    );
+  } else {
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }}>
+        <line x1={2} y1={2} x2={size-2} y2={size-2} stroke={color} strokeWidth={Math.max(1, size * 0.12)} strokeLinecap="round" />
+      </svg>
+    );
+  }
+}
+
 // Accept props from App: onBack, onGenerate, hexType, colors
 export default function Gameboard({ onBack, onGenerate, hexType, colors, radius = 12, hexSize = 18 }) {
   const coords = generateHexCoords(radius);
@@ -101,15 +199,20 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
 
   // Turn / players state
   const [playersCount, setPlayersCount] = useState(1); // 1-4 players
-  // players: array of { die1, die2, sum, ap }
-  const [players, setPlayers] = useState(() => Array.from({ length: playersCount }, () => ({ die1: null, die2: null, sum: null, ap: null })));
+  // players: array of { die1, die2, sum, ap, lastPos, gamepiece }
+  const [players, setPlayers] = useState(() => Array.from({ length: playersCount }, (_, i) => ({
+    die1: null, die2: null, sum: null, ap: null, lastPos: null, gamepiece: GAMEPIECES[i % GAMEPIECES.length]
+  })));
   const [currentPlayer, setCurrentPlayer] = useState(0); // index 0..playersCount-1
 
   // keep players array in sync when playersCount changes
   const resizePlayers = (count) => {
     setPlayers(prev => {
       const next = prev.slice(0, count);
-      while (next.length < count) next.push({ die1: null, die2: null, sum: null, ap: null });
+      while (next.length < count) {
+        const idx = next.length;
+        next.push({ die1: null, die2: null, sum: null, ap: null, lastPos: null, gamepiece: GAMEPIECES[idx % GAMEPIECES.length] });
+      }
       return next;
     });
     // clamp current player
@@ -248,6 +351,8 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
                       const next = prev.slice();
                       const cur = { ...next[currentPlayer] };
                       cur.ap = Math.max(0, (cur.ap ?? 0) - cost);
+                      // record this player's last clicked hex so symbol persists (only last shown)
+                      cur.lastPos = key;
                       next[currentPlayer] = cur;
                       return next;
                     });
@@ -263,6 +368,13 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
                 <text x={cx} y={cy + 4} fontSize={8} fill="#eee" textAnchor="middle" pointerEvents="none">
                   {q},{r}
                 </text>
+
+                {/* Draw player symbols for whoever has this hex as their lastPos */}
+                {players.map((p, idx) => {
+                  if (!p?.lastPos || p.lastPos !== key) return null;
+                  // draw the player's gamepiece at this hex
+                  return renderGamepieceAt(p.gamepiece, idx, cx, cy, hexSize);
+                })}
               </g>
             );
           })}
@@ -298,6 +410,8 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
                 gap: 4
               }}>
                 <div style={{ fontWeight: 600, color: currentPlayer === index ? '#ffdd57' : 'white' }}>
+                  {/* show player gamepiece icon next to the label */}
+                  {renderGamepieceIcon(player.gamepiece, index, 14)}
                   Player {index + 1}
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
