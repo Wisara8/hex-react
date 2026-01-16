@@ -140,8 +140,12 @@ function App() {
         <Gameboard
           onBack={() => setView('main')}
           onGenerate={handleGenerate}
+          onEncounter={encounterType}
           hexType={hexType}
           colors={COLORS}
+          encounterResult={encounterResult}
+          setEncounterResult={setEncounterResult}
+
         />
       ) : (
         <div

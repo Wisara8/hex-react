@@ -176,7 +176,7 @@ function renderGamepieceIcon(type, idx, size = 14) {
 }
 
 // Accept props from App: onBack, onGenerate, hexType, colors
-export default function Gameboard({ onBack, onGenerate, hexType, colors, radius = 12, hexSize = 18 }) {
+export default function Gameboard({ onBack, onGenerate, onEncounter, encounterResult, setEncounterResult, hexType, colors, radius = 12, hexSize = 18 }) {
   const coords = generateHexCoords(radius);
   // compute bounds
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -199,9 +199,9 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
 
   // Turn / players state
   const [playersCount, setPlayersCount] = useState(1); // 1-4 players
-  // players: array of { die1, die2, sum, ap, lastPos, gamepiece }
+  // players: array of { die1, die2, sum, ap, lastPos, moved, gamepiece }
   const [players, setPlayers] = useState(() => Array.from({ length: playersCount }, (_, i) => ({
-    die1: null, die2: null, sum: null, ap: null, lastPos: null, gamepiece: GAMEPIECES[i % GAMEPIECES.length]
+    die1: null, die2: null, sum: null, ap: null, lastPos: null, moved: 0, gamepiece: GAMEPIECES[i % GAMEPIECES.length]
   })));
   const [currentPlayer, setCurrentPlayer] = useState(0); // index 0..playersCount-1
 
@@ -211,7 +211,7 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
       const next = prev.slice(0, count);
       while (next.length < count) {
         const idx = next.length;
-        next.push({ die1: null, die2: null, sum: null, ap: null, lastPos: null, gamepiece: GAMEPIECES[idx % GAMEPIECES.length] });
+        next.push({ die1: null, die2: null, sum: null, ap: null, lastPos: null, moved: 0, gamepiece: GAMEPIECES[idx % GAMEPIECES.length] });
       }
       return next;
     });
@@ -234,8 +234,8 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
       else if (s >= 7 && s <= 14) computed = 5;
       else if (s >= 15 && s <= 19) computed = 6;
       else if (s >= 20 && s <= 24) computed = 8;
-      // preserve existing player fields (including gamepiece, lastPos, etc.)
-      next[currentPlayer] = { ...next[currentPlayer], die1: d1, die2: d2, sum: s, ap: computed };
+      // preserve existing player fields (including gamepiece), reset moved for this turn
+      next[currentPlayer] = { ...next[currentPlayer], die1: d1, die2: d2, sum: s, ap: computed, moved: 0 };
       return next;
     });
   };
@@ -244,6 +244,7 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
     // advance to next player and keep their current values (do not auto-roll)
     setCurrentPlayer(cp => (cp + 1) % playersCount);
     setSelected(null);
+    setEncounterResult(null);
   };
 
   return (
@@ -256,6 +257,7 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
       flexDirection: 'column',
       alignItems: 'center'
     }}>
+      {/* header / controls */}
       <div style={{ width: '100%', maxWidth: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6em' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <PressableButton onClick={onBack}>Back</PressableButton>
@@ -302,6 +304,13 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
         </div>
       </div>
 
+      {/* Encounter result (displayed when set in App) */}
+      
+        <div style={{ marginBottom: 8, padding: '6px 10px', background: 'rgba(0,0,0,0.4)', borderRadius: 6, color: encounterResult === 'Rare' ? '#ffcc00' : '#ddd', fontWeight: 700 }}>
+          Behold! A {encounterResult ? encounterResult : "TBD"} encounter appears!
+        </div>
+      
+
       <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: 10 }}>
         <svg
           width={width}
@@ -334,7 +343,8 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
                     opacity: (players[currentPlayer]?.ap ?? 0) > 0 ? 1 : 0.6
                   }}
                   onClick={() => {
-                    const playerAP = players[currentPlayer]?.ap ?? 0;
+                    const player = players[currentPlayer] || {};
+                    const playerAP = player.ap ?? 0;
                     // block clicks when current player has no action points
                     if (playerAP <= 0) return;
 
@@ -352,13 +362,19 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
                     // cost: HILL, RIVER, SWAMP cost 2 AP, others cost 1 AP
                     const cost = (generatedType === 'HILL' || generatedType === 'RIVER' || generatedType === 'SWAMP') ? 2 : 1;
 
-                    // consume AP for current player (min 0)
+                    // compute new AP and moved count synchronously so we can trigger encounter when AP hits 0
+                    const prevLast = player.lastPos;
+                    const movedBefore = player.moved ?? 0;
+                    const movedAfter = (prevLast === key) ? movedBefore : movedBefore + 1;
+                    const newAP = Math.max(0, playerAP - cost);
+
+                    // update player state
                     setPlayers(prev => {
                       const next = prev.slice();
                       const cur = { ...next[currentPlayer] };
-                      cur.ap = Math.max(0, (cur.ap ?? 0) - cost);
-                      // record this player's last clicked hex so gamepiece moves (only last shown)
+                      cur.ap = newAP;
                       cur.lastPos = key;
+                      cur.moved = movedAfter;
                       next[currentPlayer] = cur;
                       return next;
                     });
@@ -369,6 +385,15 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
                     }
 
                     setSelected(key);
+
+                    // if AP reached 0, trigger encounter based on movedAfter
+                    if (newAP === 0 && onEncounter) {
+                      let rangeLabel = '1-2';
+                      if (movedAfter >= 0 && movedAfter <= 2) rangeLabel = '1-2';
+                      else if (movedAfter >= 3 && movedAfter <= 4) rangeLabel = '3-4';
+                      else if (movedAfter >= 5) rangeLabel = '5+';
+                      onEncounter(rangeLabel);
+                    }
                   }}
                 />
                 {/* small coord label */}
@@ -376,7 +401,7 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
                   {q},{r}
                 </text>
 
-                {/* Draw player symbols for whoever has this hex as their lastPos */}
+                {/* Draw player gamepieces for whoever has this hex as their lastPos */}
                 {players.map((p, idx) => {
                   if (!p?.lastPos || p.lastPos !== key) return null;
                   // draw the player's gamepiece at this hex
