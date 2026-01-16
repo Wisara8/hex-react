@@ -338,10 +338,15 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
                     // block clicks when current player has no action points
                     if (playerAP <= 0) return;
 
-                    // call App's handleGenerate to get a generated hex type
-                    let generatedType = null;
-                    if (onGenerate) {
-                      generatedType = onGenerate();
+                    // if hex already assigned, reuse that type and DO NOT reassign
+                    const existingType = assigned[key];
+                    let generatedType = existingType || null;
+
+                    if (!existingType) {
+                      // call App's handleGenerate to get a generated hex type (only when unassigned)
+                      if (onGenerate) {
+                        generatedType = onGenerate();
+                      }
                     }
 
                     // cost: HILL, RIVER, SWAMP cost 2 AP, others cost 1 AP
@@ -352,16 +357,17 @@ export default function Gameboard({ onBack, onGenerate, hexType, colors, radius 
                       const next = prev.slice();
                       const cur = { ...next[currentPlayer] };
                       cur.ap = Math.max(0, (cur.ap ?? 0) - cost);
-                      // record this player's last clicked hex so symbol persists (only last shown)
+                      // record this player's last clicked hex so gamepiece moves (only last shown)
                       cur.lastPos = key;
                       next[currentPlayer] = cur;
                       return next;
                     });
 
-                    // persist assigned type/color (global board)
-                    if (generatedType) {
+                    // persist assigned type/color only if it was previously unassigned
+                    if (!existingType && generatedType) {
                       setAssigned(prev => ({ ...prev, [key]: generatedType }));
                     }
+
                     setSelected(key);
                   }}
                 />
