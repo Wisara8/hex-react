@@ -240,6 +240,19 @@ export default function Gameboard({ onBack, onGenerate, onEncounter, encounterRe
     });
   };
 
+  // new helper to open encounters manually (only allowed when player rolled and AP === 0)
+  const openEncounters = () => {
+    const player = players[currentPlayer] || {};
+    if (!onEncounter) return;
+    if (player.ap !== 0 || player.sum == null) return;
+    const moved = player.moved ?? 0;
+    let rangeLabel = '1-2';
+    if (moved >= 0 && moved <= 2) rangeLabel = '1-2';
+    else if (moved >= 3 && moved <= 4) rangeLabel = '3-4';
+    else if (moved >= 5) rangeLabel = '5+';
+    onEncounter(rangeLabel);
+  };
+
   const endTurn = () => {
     // advance to next player and keep their current values (do not auto-roll)
     setCurrentPlayer(cp => (cp + 1) % playersCount);
@@ -261,6 +274,14 @@ export default function Gameboard({ onBack, onGenerate, onEncounter, encounterRe
       <div style={{ width: '100%', maxWidth: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6em' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <PressableButton onClick={onBack}>Back</PressableButton>
+          {/* Encounters button: only active when current player rolled and AP === 0 */}
+          <PressableButton
+            onClick={openEncounters}
+            disabled={!(players[currentPlayer]?.ap === 0 && players[currentPlayer]?.sum != null)}
+            style={{ padding: '0.5em 0.7em', marginLeft: 6, backgroundColor: (players[currentPlayer]?.ap === 0 && players[currentPlayer]?.sum != null) ? '#3a87ff' : undefined }}
+          >
+            Encounters
+          </PressableButton>
           {/* player count controls */}
           <div style={{ display: 'flex', gap: 6, marginLeft: 6 }}>
             {[1,2,3,4].map(n => (
