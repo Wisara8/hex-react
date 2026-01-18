@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PressableButton from './components/PressableButton';
 import EncounterModal from './components/EncounterModal';
 import { generateHexCoords, axialToPixel, polygonPoints } from './utils/hex';
-import { renderGamepieceAt, renderGamepieceIcon } from './components/Gamepiece';
+import { renderGamepieceAt, renderGamepieceIcon, GAMEPIECES } from './components/Gamepiece';
 
 // Accept props from App: onBack, onGenerate, hexType, colors
 export default function Gameboard({ onBack, onGenerate, onEncounter, encounterResult, setEncounterResult, hexType, colors, radius = 12, hexSize = 18 }) {
@@ -27,7 +27,7 @@ export default function Gameboard({ onBack, onGenerate, onEncounter, encounterRe
 
   const [playersCount, setPlayersCount] = useState(1);
   const [players, setPlayers] = useState(() => Array.from({ length: playersCount }, (_, i) => ({
-    die1: null, die2: null, sum: null, ap: null, lastPos: null, moved: 0, gamepiece: null
+    die1: null, die2: null, sum: null, ap: null, lastPos: null, moved: 0, gamepiece: GAMEPIECES[i % GAMEPIECES.length]
   })));
   const [currentPlayer, setCurrentPlayer] = useState(0);
 
@@ -46,7 +46,7 @@ export default function Gameboard({ onBack, onGenerate, onEncounter, encounterRe
       const next = prev.slice(0, count);
       while (next.length < count) {
         const idx = next.length;
-        next.push({ die1: null, die2: null, sum: null, ap: null, lastPos: null, moved: 0, gamepiece: idx });
+        next.push({ die1: null, die2: null, sum: null, ap: null, lastPos: null, moved: 0, gamepiece: GAMEPIECES[idx % GAMEPIECES.length] });
       }
       return next;
     });
