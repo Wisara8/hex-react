@@ -1,179 +1,8 @@
-import React, { useState } from 'react';
-
-// lightweight PressableButton same as used in App (keeps consistent feedback)
-function PressableButton({ children, onClick, style = {}, ...props }) {
-  const [pressed, setPressed] = useState(false);
-
-  const handleMouseDown = () => setPressed(true);
-  const handleMouseUp = () => setPressed(false);
-  const handleMouseLeave = () => setPressed(false);
-  const handleClick = (e) => {
-    setPressed(true);
-    setTimeout(() => setPressed(false), 180);
-    if (onClick) onClick(e);
-  };
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      setPressed(true);
-      setTimeout(() => setPressed(false), 180);
-    }
-  };
-
-  return (
-    <button
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      style={{
-        padding: '0.5em 0.8em',
-        fontSize: '0.95em',
-        border: 'none',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        backgroundColor: pressed ? '#555' : '#444',
-        color: 'white',
-        transition: 'all 0.18s ease',
-        transform: pressed ? 'translateY(1px) scale(0.97)' : 'translateY(0) scale(1)',
-        boxShadow: pressed ? 'inset 0 0 8px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.2)',
-        ...style
-      }}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-}
-
-// Create axial coords inside radius
-function generateHexCoords(radius) {
-  const coords = [];
-  for (let q = -radius; q <= radius; q++) {
-    const r1 = Math.max(-radius, -q - radius);
-    const r2 = Math.min(radius, -q + radius);
-    for (let r = r1; r <= r2; r++) {
-      coords.push({ q, r });
-    }
-  }
-  return coords;
-}
-
-// axial -> pixel for pointy-topped hexes
-function axialToPixel(q, r, size) {
-  const x = size * Math.sqrt(3) * (q + r / 2);
-  const y = size * 1.5 * r;
-  return { x, y };
-}
-
-function polygonPoints(cx, cy, size) {
-  const pts = [];
-  for (let i = 0; i < 6; i++) {
-    const angle = Math.PI / 180 * (60 * i - 30); // pointy
-    const x = cx + size * Math.cos(angle);
-    const y = cy + size * Math.sin(angle);
-    pts.push(`${x},${y}`);
-  }
-  return pts.join(' ');
-}
-
-// gamepiece definitions (refactor shapes into gamepieces)
-const GAMEPIECES = ['SQUARE', 'CIRCLE', 'TRIANGLE', 'SLASH'];
-const GAMEPIECE_COLORS = ['#ff5f57', '#ffffffff', '#000000ff', '#f0f342ff'];
-
-/**
- * Render a gamepiece shape positioned at cx,cy inside the board SVG
- */
-function renderGamepieceAt(type, idx, cx, cy, size) {
-  const symbolSize = Math.max(8, size * 0.6);
-  const half = symbolSize / 2;
-  const color = GAMEPIECE_COLORS[idx % GAMEPIECE_COLORS.length];
-  const key = `gp-${idx}`;
-
-  if (type === 'SQUARE') {
-    return (
-      <rect
-        key={key}
-        x={cx - half}
-        y={cy - half}
-        width={symbolSize}
-        height={symbolSize}
-        rx={2}
-        fill={color}
-        stroke="#222"
-        strokeWidth={1}
-      />
-    );
-  } else if (type === 'CIRCLE') {
-    return (
-      <circle
-        key={key}
-        cx={cx}
-        cy={cy}
-        r={half}
-        fill={color}
-        stroke="#222"
-        strokeWidth={1}
-      />
-    );
-  } else if (type === 'TRIANGLE') {
-    const tPts = [
-      `${cx},${cy - half}`,
-      `${cx - half},${cy + half * 0.7}`,
-      `${cx + half},${cy + half * 0.7}`
-    ].join(' ');
-    return (
-      <polygon
-        key={key}
-        points={tPts}
-        fill={color}
-        stroke="#222"
-        strokeWidth={1}
-      />
-    );
-  } else { // SLASH
-    return (
-      <g key={key} stroke={color} strokeWidth={Math.max(2, symbolSize * 0.18)} strokeLinecap="round">
-        <line x1={cx - half} y1={cy - half} x2={cx + half} y2={cy + half} />
-      </g>
-    );
-  }
-}
-
-/**
- * small inline icon for player list (returns an <svg> element)
- */
-function renderGamepieceIcon(type, idx, size = 14) {
-  const color = GAMEPIECE_COLORS[idx % GAMEPIECE_COLORS.length];
-  const half = size / 2;
-
-  if (type === 'SQUARE') {
-    return (
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }}>
-        <rect x={1} y={1} width={size-2} height={size-2} rx={2} fill={color} stroke="#222" strokeWidth={1} />
-      </svg>
-    );
-  } else if (type === 'CIRCLE') {
-    return (
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }}>
-        <circle cx={half} cy={half} r={half-1} fill={color} stroke="#222" strokeWidth={1} />
-      </svg>
-    );
-  } else if (type === 'TRIANGLE') {
-    const tPts = `${half},1 ${1},${size-1} ${size-1},${size-1}`;
-    return (
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }}>
-        <polygon points={tPts} fill={color} stroke="#222" strokeWidth={1} />
-      </svg>
-    );
-  } else {
-    return (
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }}>
-        <line x1={2} y1={2} x2={size-2} y2={size-2} stroke={color} strokeWidth={Math.max(1, size * 0.12)} strokeLinecap="round" />
-      </svg>
-    );
-  }
-}
+import React, { useState, useEffect } from 'react';
+import PressableButton from './components/PressableButton';
+import EncounterModal from './components/EncounterModal';
+import { generateHexCoords, axialToPixel, polygonPoints } from './utils/hex';
+import { renderGamepieceAt, renderGamepieceIcon } from './components/Gamepiece';
 
 // Accept props from App: onBack, onGenerate, hexType, colors
 export default function Gameboard({ onBack, onGenerate, onEncounter, encounterResult, setEncounterResult, hexType, colors, radius = 12, hexSize = 18 }) {
@@ -194,53 +23,54 @@ export default function Gameboard({ onBack, onGenerate, onEncounter, encounterRe
   const height = Math.ceil(maxY - minY + pad * 2);
 
   const [selected, setSelected] = useState(null);
-  // map of "q,r" -> assigned hex type (persists color)
   const [assigned, setAssigned] = useState({});
 
-  // Turn / players state
-  const [playersCount, setPlayersCount] = useState(1); // 1-4 players
-  // players: array of { die1, die2, sum, ap, lastPos, moved, gamepiece }
+  const [playersCount, setPlayersCount] = useState(1);
   const [players, setPlayers] = useState(() => Array.from({ length: playersCount }, (_, i) => ({
-    die1: null, die2: null, sum: null, ap: null, lastPos: null, moved: 0, gamepiece: GAMEPIECES[i % GAMEPIECES.length]
+    die1: null, die2: null, sum: null, ap: null, lastPos: null, moved: 0, gamepiece: null
   })));
-  const [currentPlayer, setCurrentPlayer] = useState(0); // index 0..playersCount-1
+  const [currentPlayer, setCurrentPlayer] = useState(0);
 
-  // keep players array in sync when playersCount changes
+  const [encounterModalOpen, setEncounterModalOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape' && encounterModalOpen) setEncounterModalOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [encounterModalOpen]);
+
   const resizePlayers = (count) => {
     setPlayers(prev => {
       const next = prev.slice(0, count);
       while (next.length < count) {
         const idx = next.length;
-        next.push({ die1: null, die2: null, sum: null, ap: null, lastPos: null, moved: 0, gamepiece: GAMEPIECES[idx % GAMEPIECES.length] });
+        next.push({ die1: null, die2: null, sum: null, ap: null, lastPos: null, moved: 0, gamepiece: idx });
       }
       return next;
     });
-    // clamp current player
     setCurrentPlayer(cp => Math.min(cp, Math.max(0, count - 1)));
     setPlayersCount(count);
   };
 
   const rollD12 = () => Math.floor(Math.random() * 12) + 1;
   const rollTwoD12 = () => {
-    // only the active player rolls for themselves
     setPlayers(prev => {
       const next = prev.slice();
       const d1 = rollD12();
       const d2 = rollD12();
       const s = d1 + d2;
-      // compute action points based on sum
       let computed = null;
       if (s >= 2 && s <= 6) computed = 4;
       else if (s >= 7 && s <= 14) computed = 5;
       else if (s >= 15 && s <= 19) computed = 6;
       else if (s >= 20 && s <= 24) computed = 8;
-      // preserve existing player fields (including gamepiece), reset moved for this turn
       next[currentPlayer] = { ...next[currentPlayer], die1: d1, die2: d2, sum: s, ap: computed, moved: 0 };
       return next;
     });
   };
 
-  // new helper to open encounters manually (only allowed when player rolled and AP === 0)
   const openEncounters = () => {
     const player = players[currentPlayer] || {};
     if (!onEncounter) return;
@@ -251,13 +81,14 @@ export default function Gameboard({ onBack, onGenerate, onEncounter, encounterRe
     else if (moved >= 3 && moved <= 4) rangeLabel = '3-4';
     else if (moved >= 5) rangeLabel = '5+';
     onEncounter(rangeLabel);
+    setEncounterModalOpen(true);
   };
 
   const endTurn = () => {
-    // advance to next player and keep their current values (do not auto-roll)
     setCurrentPlayer(cp => (cp + 1) % playersCount);
     setSelected(null);
     setEncounterResult(null);
+    setEncounterModalOpen(false);
   };
 
   return (
@@ -513,6 +344,13 @@ export default function Gameboard({ onBack, onGenerate, onEncounter, encounterRe
           </div>
         </div>
       )}
+
+      {/* Encounter modal */}
+      <EncounterModal
+        open={encounterModalOpen}
+        onClose={() => setEncounterModalOpen(false)}
+        encounterResult={encounterResult}
+      />
     </div>
   );
 }
