@@ -3,10 +3,15 @@ import PressableButton from './PressableButton';
 
 export default function EncounterModal({ open, onClose, encounterResult }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const [selectedOutcomeIndex, setSelectedOutcomeIndex] = useState(null);
   const [isDisabled, setIsDisabled] = useState(false);
 
   useEffect(() => {
-    if (!open) setSelectedIndex(null);
+    if (!open) {
+      setSelectedIndex(null);
+      setSelectedOutcomeIndex(null);
+      setIsDisabled(false);
+    }
   }, [open, encounterResult]);
 
   if (!open) return null;
@@ -18,10 +23,18 @@ export default function EncounterModal({ open, onClose, encounterResult }) {
   function optionButton(idx) {
     setSelectedIndex(idx);
     setIsDisabled(true);
+    const opts = options[idx]?.optionOutcomes ?? [];
+    if (opts.length) {
+      const pick = Math.floor(Math.random() * opts.length);
+      setSelectedOutcomeIndex(pick);
+    } else {
+      setSelectedOutcomeIndex(null);
+    }
   }
 
   function closeModal() {
     setSelectedIndex(null);
+    setSelectedOutcomeIndex(null);
     setIsDisabled(false);
     onClose();
   }
@@ -82,11 +95,23 @@ export default function EncounterModal({ open, onClose, encounterResult }) {
           <div style={{ marginTop: 8, padding: '10px', borderRadius: 8, background: 'rgba(255,255,255,0.03)' }}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Outcomes</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {outcomes.length ? outcomes.map((o, i) => (
-                <div key={i} style={{ padding: '8px', borderRadius: 6, background: 'rgba(0,0,0,0.2)', color: '#ddd' }}>
-                  {o.text ?? JSON.stringify(o)}
-                </div>
-              )) : (
+              {outcomes.length ? outcomes.map((o, i) => {
+                const isPicked = i === selectedOutcomeIndex;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      padding: '8px',
+                      borderRadius: 6,
+                      background: isPicked ? 'linear-gradient(90deg,#2b6cff, #3a87ff)' : 'rgba(0,0,0,0.2)',
+                      color: isPicked ? '#fff' : '#ddd',
+                      fontWeight: isPicked ? 700 : 400
+                    }}
+                  >
+                    {o.text ?? JSON.stringify(o)}
+                  </div>
+                );
+              }) : (
                 <div style={{ color: '#999' }}>No outcomes defined.</div>
               )}
             </div>
