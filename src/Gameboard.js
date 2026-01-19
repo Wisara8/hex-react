@@ -158,8 +158,8 @@ export default function Gameboard({ onBack, onGenerate, onEncounter, encounterRe
 
       {/* Encounter result (displayed when set in App) */}
       
-        <div style={{ marginBottom: 8, padding: '6px 10px', background: 'rgba(0,0,0,0.4)', borderRadius: 6, color: encounterResult === 'Rare' ? '#ffcc00' : '#ddd', fontWeight: 700 }}>
-          Behold! A {encounterResult ? encounterResult : "TBD"} encounter appears!
+        <div style={{ marginBottom: 8, padding: '6px 10px', background: 'rgba(0,0,0,0.4)', borderRadius: 6, color: encounterResult ? '#ffcc00' : '#ddd', fontWeight: 700 }}>
+          Behold! A {encounterResult ? encounterResult.type : "TBD"} encounter appears!
         </div>
       
 

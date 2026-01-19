@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './App.css';
 import Gameboard from './Gameboard';
+import { common, rare } from './Encounters';
 
 const BASE = {
   FOREST: 60,
@@ -112,8 +113,13 @@ function App() {
       default:
         threshold = 100;
     }
+    const encounterRarity = roll > threshold ? 'Rare' : 'Common';
 
-    setEncounterResult(roll > threshold ? 'Rare' : 'Common');
+    // pick a random encounter object from the appropriate pool
+    const pool = encounterRarity === 'Rare' ? rare : common;
+    const picked = pool[Math.floor(Math.random() * pool.length)];
+
+    setEncounterResult(picked);
   };
 
   return (
@@ -219,10 +225,10 @@ function App() {
               fontSize: '2em',
               fontWeight: 'bold',
               marginTop: '1em',
-              color: encounterResult === 'Rare' ? '#ffcc00' : '#ffffff',
+              // color: encounterResult.type === 'Rare' ? '#ffcc00' : '#ffffff',
               transition: 'all 0.3s ease'
             }}>
-              {encounterResult ? encounterResult : '—'}
+              {encounterResult ? encounterResult.type : '—'}
             </div>
           </div>
         </div>

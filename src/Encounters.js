@@ -1,6 +1,7 @@
-const commonScenarios = [
+const common = [
   {
     id: "scenario_001",
+    type: "Common",
     scenario: "An overgrown sign post lies on the side of the trail you are following.",
     options: [
       {
@@ -44,6 +45,7 @@ const commonScenarios = [
 
   {
     id: "scenario_002",
+    type: "Common",
     scenario: "A gentle spiral of enchanted leaves dances above the forest floor, stirring the air and imbuing it with strange energy. You feel a tug on your senses urging you to interact.",
     options: [
       {
@@ -87,6 +89,7 @@ const commonScenarios = [
 
   {
     id: "scenario_003",
+    type: "Common",
     scenario: "Your gander gleams a gangly gnarled tree teleporting away anything that approaches it.",
     options: [
       {
@@ -130,6 +133,7 @@ const commonScenarios = [
 
   {
     id: "scenario_004",
+    type: "Common",
     scenario: "The remains of an abandoned camp lies at the edge of a meadow. The owners appear to be long gone (i.e. guilt free loot for the taking).",
     options: [
       {
@@ -149,6 +153,7 @@ const commonScenarios = [
 
   {
     id: "scenario_005",
+    type: "Common",
     scenario: "Sinister thieving vines sneak up on you. You catch a glimpse of them coiled and ready to strike just in time to…",
     options: [
       {
@@ -188,9 +193,10 @@ const commonScenarios = [
   }
 ];
 
-const rareScenarios = [
+const rare = [
   {
     id: "rare_scenario_001",
+    type: "Rare",
     scenario: "Friendly centaur approaches offering to impart the lore of the land to those who would listen.",
     options: [
       {
@@ -234,6 +240,7 @@ const rareScenarios = [
 
   {
     id: "rare_scenario_002",
+    type: "Rare",
     scenario: "You come across a suspended ball of bones held together with sweet smelling tree sap and coagulated blood.",
     options: [
       {
@@ -286,6 +293,7 @@ const rareScenarios = [
 
   {
     id: "rare_scenario_003",
+    type: "Rare",
     scenario: "The melody of singing mushrooms invades your mind.",
     options: [
       {
@@ -341,6 +349,7 @@ const rareScenarios = [
 
   {
     id: "rare_scenario_004",
+    type: "Rare",
     scenario: "Monster! — You come upon a monster. Draw a random monster not on the board.",
     options: [
       {
@@ -378,6 +387,7 @@ const rareScenarios = [
 
   {
     id: "rare_scenario_005",
+    type: "Rare",
     scenario: "Treasure! You spy a hidden treasure chest tucked into the canopy.",
     options: [
       {
@@ -407,4 +417,4 @@ const rareScenarios = [
     ]
   }
 ];
-export { commonScenarios, rareScenarios };
+export { common, rare };

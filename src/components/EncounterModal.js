@@ -30,8 +30,8 @@ export default function EncounterModal({ open, onClose, encounterResult }) {
         }}
       >
         <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Encounter</div>
-        <div style={{ marginBottom: 12, color: encounterResult === 'Rare' ? '#ffcc00' : '#ddd', fontWeight: 600 }}>
-          {encounterResult ? encounterResult : 'TBD'}
+        <div style={{ marginBottom: 12, color: encounterResult ? '#ffcc00' : '#ddd', fontWeight: 600 }}>
+          {encounterResult ? encounterResult.scenario : 'TBD'}
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <PressableButton onClick={onClose} style={{ backgroundColor: '#3a87ff' }}>
