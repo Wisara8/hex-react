@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import Gameboard from './Gameboard';
 import { common, rare } from './Encounters';
@@ -38,6 +38,22 @@ function App() {
   const [history, setHistory] = useState([]);
   const [encounterResult, setEncounterResult] = useState(null);
   const [view, setView] = useState('main'); // 'main' or 'board'
+
+  // displayBg is the actual background color used by the page.
+  // When hexType changes we briefly set displayBg to black then to the new color.
+  const [displayBg, setDisplayBg] = useState(hexType ? COLORS[hexType] : '#222');
+  const [isFlashing, setIsFlashing] = useState(false);
+
+    useEffect(() => {
+    // if (!isFlashing) return;
+
+    const timer = setTimeout(() => {
+      setDisplayBg(COLORS[hexType]); // Phase 2: new color
+      setIsFlashing(false);
+    }, 150); // Flash duration in ms
+
+    return () => clearTimeout(timer);
+  }, [isFlashing]);
 
   // Pressable button component gives the same press animation/feedback to any button.
   function PressableButton({ children, onClick, style = {}, ...props }) {
@@ -88,13 +104,13 @@ function App() {
 
   const handleGenerate = () => {
      const selected = randomWeighted(BASE);
+     setIsFlashing(true);
+     setDisplayBg('#000');
      setHexType(selected);
      setHistory(prev => [selected, ...prev.slice(0, 4)]);
      // return the selected type so callers (e.g. Gameboard) can persist it immediately
      return selected;
    };
-
-  const backgroundColor = hexType ? COLORS[hexType] : '#222';
 
   const encounterType = (rangeLabel) => {
     const roll = Math.random() * 100;
@@ -126,7 +142,7 @@ function App() {
     <div
       className="App"
       style={{
-        backgroundColor,
+        backgroundColor: displayBg,
         transition: 'background-color 0.8s ease',
         minHeight: '100vh',
         margin: 0,
@@ -151,7 +167,6 @@ function App() {
           colors={COLORS}
           encounterResult={encounterResult}
           setEncounterResult={setEncounterResult}
-
         />
       ) : (
         <div
